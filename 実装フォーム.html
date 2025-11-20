@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kintone連携フォーム (JavaScript版)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .warning-box strong {
+            color: #856404;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .warning-box p {
+            color: #856404;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .settings-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+
+        .settings-btn:hover {
+            background: #5568d3;
+        }
+
+        .settings-panel {
+            display: none;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .settings-panel.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: #5568d3;
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .status-message.active {
+            display: block;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .section-title {
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .info-box p {
+            color: #1976D2;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 5px 0;
+        }
+
+        .guide {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .guide h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .guide p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .guide strong {
+            color: #333;
+        }
+
+        .guide code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 警告 -->
+        <div class="card">
+            <div class="warning-box">
+                <strong>⚠️ セキュリティ警告</strong>
+                <p>この実装はテスト・開発環境専用です。APIトークンがブラウザに露出するため、本番環境では使用しないでください。</p>
+            </div>
+        </div>
+
+        <!-- ヘッダー -->
+        <div class="card">
+            <h1>kintone連携フォーム</h1>
+            <p class="subtitle">JavaScript版 - 外部サイトからkintoneアプリにデータを送信</p>
+            
+            <button class="settings-btn" onclick="toggleSettings()">
+                ⚙️ kintone接続設定
+            </button>
+
+            <!-- 設定パネル -->
+            <div id="settingsPanel" class="settings-panel">
+                <div class="section-title">kintone接続設定</div>
+                
+                <div class="form-group">
+                    <label>kintoneドメイン <span class="required">*</span></label>
+                    <input type="text" id="domain" placeholder="your-domain.cybozu.com">
+                    <small style="color: #666;">例: example.cybozu.com</small>
+                </div>
+
+                <div class="form-group">
+                    <label>アプリID <span class="required">*</span></label>
+                    <input type="text" id="appId" placeholder="123">
+                    <small style="color: #666;">アプリのURLに表示される数字</small>
+                </div>
+
+                <div class="form-group">
+                    <label>APIトークン <span class="required">*</span></label>
+                    <input type="password" id="apiToken" placeholder="APIトークンを入力">
+                    <small style="color: #666;">kintoneアプリの設定から取得</small>
+                </div>
+
+                <div class="section-title">フィールドコード設定</div>
+
+                <div class="form-group">
+                    <label>名前フィールドコード</label>
+                    <input type="text" id="fieldName" placeholder="名前" value="名前">
+                </div>
+
+                <div class="form-group">
+                    <label>メールアドレスフィールドコード</label>
+                    <input type="text" id="fieldEmail" placeholder="メールアドレス" value="メールアドレス">
+                </div>
+
+                <div class="form-group">
+                    <label>メッセージフィールドコード</label>
+                    <input type="text" id="fieldMessage" placeholder="メッセージ" value="メッセージ">
+                </div>
+
+                <div class="info-box">
+                    <p>💡 設定は自動的にブラウザに保存されます</p>
+                    <p>💡 フィールドコードはkintoneアプリの「フォーム設定」で確認できます</p>
+                </div>
+
+                <button onclick="saveSettings()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; width: 100%;">
+                    ✅ 設定を保存
+                </button>
+            </div>
+        </div>
+
+        <!-- ステータスメッセージ -->
+        <div id="statusMessage" class="status-message"></div>
+
+        <!-- メインフォーム -->
+        <div class="card">
+            <h2 style="margin-bottom: 25px; color: #333;">お問い合わせフォーム</h2>
+            
+            <div class="form-group">
+                <label>お名前 <span class="required">*</span></label>
+                <input type="text" id="name" placeholder="山田太郎" required>
+            </div>
+
+            <div class="form-group">
+                <label>メールアドレス <span class="required">*</span></label>
+                <input type="email" id="email" placeholder="example@email.com" required>
+            </div>
+
+            <div class="form-group">
+                <label>メッセージ <span class="required">*</span></label>
+                <textarea id="message" placeholder="お問い合わせ内容をご記入ください" required></textarea>
+            </div>
+
+            <button class="submit-btn" onclick="submitToKintone()" id="submitBtn">
+                📤 kintoneに送信
+            </button>
+        </div>
+
+        <!-- 実装ガイド -->
+        <div class="card guide">
+            <h3>📋 セットアップ手順</h3>
+            
+            <p><strong>1. kintoneでAPIトークンを取得:</strong></p>
+            <p>アプリの設定 → API → APIトークン → 「生成する」</p>
+            <p>→ <code>レコード追加</code> 権限をONにする → 保存 → アプリを更新</p>
+            
+            <p style="margin-top: 15px;"><strong>2. フィールドコードを確認:</strong></p>
+            <p>アプリの設定 → フォーム → 各フィールドをクリック → 「フィールドコード」をメモ</p>
+            
+            <p style="margin-top: 15px;"><strong>3. このページの「設定」ボタンから接続情報を入力:</strong></p>
+            <p>ドメイン、アプリID、APIトークン、フィールドコードを設定</p>
+            
+            <p style="margin-top: 15px;"><strong>⚠️ 重要な注意事項:</strong></p>
+            <p>• この実装はテスト・開発環境専用です</p>
+            <p>• APIトークンがブラウザに保存されるため、本番環境では使用しないでください</p>
+            <p>• 本番環境では必ずサーバーサイド実装を使用してください</p>
+            
+            <p style="margin-top: 15px;"><strong>✅ この実装が適している場面:</strong></p>
+            <p>• 社内ネットワーク限定のフォーム</p>
+            <p>• 開発・テスト環境</p>
+            <p>• 個人的な用途</p>
+        </div>
+    </div>
+
+    <script>
+        // ページ読み込み時に保存された設定を復元
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+        });
+
+        // 設定パネルの表示/非表示
+        function toggleSettings() {
+            const panel = document.getElementById('settingsPanel');
+            panel.classList.toggle('active');
+        }
+
+        // 設定を保存
+        function saveSettings() {
+            const settings = {
+                domain: document.getElementById('domain').value.trim(),
+                appId: document.getElementById('appId').value.trim(),
+                apiToken: document.getElementById('apiToken').value.trim(),
+                fieldName: document.getElementById('fieldName').value.trim(),
+                fieldEmail: document.getElementById('fieldEmail').value.trim(),
+                fieldMessage: document.getElementById('fieldMessage').value.trim()
+            };
+
+            // バリデーション
+            if (!settings.domain || !settings.appId || !settings.apiToken) {
+                showStatus('ドメイン、アプリID、APIトークンは必須です', false);
+                return;
+            }
+
+            // ローカルストレージに保存
+            try {
+                localStorage.setItem('kintoneSettings', JSON.stringify(settings));
+                showStatus('✅ 設定を保存しました', true);
+                
+                // 設定パネルを閉じる
+                setTimeout(() => {
+                    toggleSettings();
+                }, 1000);
+            } catch (error) {
+                showStatus('設定の保存に失敗しました', false);
+            }
+        }
+
+        // 設定を読み込み
+        function loadSettings() {
+            try {
+                const saved = localStorage.getItem('kintoneSettings');
+                if (saved) {
+                    const settings = JSON.parse(saved);
+                    document.getElementById('domain').value = settings.domain || '';
+                    document.getElementById('appId').value = settings.appId || '';
+                    document.getElementById('apiToken').value = settings.apiToken || '';
+                    document.getElementById('fieldName').value = settings.fieldName || '名前';
+                    document.getElementById('fieldEmail').value = settings.fieldEmail || 'メールアドレス';
+                    document.getElementById('fieldMessage').value = settings.fieldMessage || 'メッセージ';
+                }
+            } catch (error) {
+                console.warn('設定の読み込みに失敗しました:', error);
+            }
+        }
+
+        // ステータスメッセージを表示
+        function showStatus(message, isSuccess) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = 'status-message active ' + (isSuccess ? 'status-success' : 'status-error');
+            
+            // 5秒後に自動的に非表示
+            setTimeout(() => {
+                statusEl.classList.remove('active');
+            }, 5000);
+        }
+
+        // kintoneにデータを送信
+        async function submitToKintone() {
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // フォームの値を取得
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const message = document.getElementById('message').value.trim();
+
+            // バリデーション
+            if (!name || !email || !message) {
+                showStatus('すべての項目を入力してください', false);
+                return;
+            }
+
+            // メールアドレスの形式チェック
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showStatus('有効なメールアドレスを入力してください', false);
+                return;
+            }
+
+            // 設定値を取得
+            const domain = document.getElementById('domain').value.trim();
+            const appId = document.getElementById('appId').value.trim();
+            const apiToken = document.getElementById('apiToken').value.trim();
+            const fieldName = document.getElementById('fieldName').value.trim();
+            const fieldEmail = document.getElementById('fieldEmail').value.trim();
+            const fieldMessage = document.getElementById('fieldMessage').value.trim();
+
+            if (!domain || !appId || !apiToken) {
+                showStatus('設定からkintone接続情報を入力してください', false);
+                // 設定パネルを自動で開く
+                if (!document.getElementById('settingsPanel').classList.contains('active')) {
+                    toggleSettings();
+                }
+                return;
+            }
+
+            // ローディング状態
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span>送信中...';
+
+            // kintone REST APIのURL
+            const url = `https://${domain}/k/v1/record.json`;
+
+            // レコードデータを作成
+            const record = {};
+            record[fieldName] = { value: name };
+            record[fieldEmail] = { value: email };
+            record[fieldMessage] = { value: message };
+
+            try {
+                // APIリクエスト
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Cybozu-API-Token': apiToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        app: appId,
+                        record: record
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showStatus(`✅ レコードID ${result.id} で正常に登録されました!`, true);
+                    
+                    // フォームをリセット
+                    document.getElementById('name').value = '';
+                    document.getElementById('email').value = '';
+                    document.getElementById('message').value = '';
+                } else {
+                    throw new Error(result.message || 'kintoneへの送信に失敗しました');
+                }
+            } catch (error) {
+                console.error('送信エラー:', error);
+                showStatus(`❌ エラー: ${error.message}`, false);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '📤 kintoneに送信';
+            }
+        }
+
+        // Enterキーでの送信を防止(テキストエリア内は除く)
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                if (e.target.tagName === 'INPUT') {
+                    submitToKintone();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
